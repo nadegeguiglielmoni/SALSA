@@ -54,14 +54,12 @@ def main():
     coordinates_map = {}
     first_in_pair = {}
     second_in_pair = {}
-    print >> sys.stderr, 'bedfile started'
+    print("Loading bedfile...")
     prev_line = ''
     with open(args.mapping,'r') as f:
         for line in f:
             attrs = line.split()
-            # if len(attrs) < 6:
-            #     continue
-            # try:
+
             if prev_line == '':
                 prev_line = line
                 continue
@@ -75,15 +73,9 @@ def main():
                 curr_read = attrs[3]
                 #print prev_read.split('/')[0]
                 if prev_read.split('/')[0] == curr_read.split('/')[0]:
-                    #print 'here'
-
                     pos1 = (long(prev_attrs[1]) + long(prev_attrs[2]))/2.0
                     pos2 = (long(attrs[1]) + long(attrs[2]))/2.0
-                    # l1 = 300000.0
-                    # l2 = 300000.0
-                    #print pos1, pos2
                     key = ''
-                    #print key
                     first = ''
                     second = ''
                     if prev_attrs[0] < attrs[0]:
@@ -99,68 +91,36 @@ def main():
                     all_counts[t_key] += 1
                     len1 = contig_lengths[first]
                     len2 = contig_lengths[second]
-                    #print len1,len2
                     l1 = len1/2
                     l2 = len2/2
                     r1 = l1 / len1
                     r2 = l2 / len2
                     if pos1 <= l1 and pos2 <= l2:
-                        #print 'here1'
                         key = first + ":B$" + second + ':B'
-                        #key1 = rec2[0] + ":B$" + rec1[0] + ':B'
-                        #norm_score[key] = RF_counts_left[first]*r1 + RF_counts_left[second]*r2
                         norm_score[key] = RF_counts_left[first]*r1 + RF_counts_left[second]*r2
-                        #norm_score[key1] = RF_counts_left[rec1[0]] + RF_counts_left[rec2[0]]
                     if pos1 <= l1 and pos2 > len2 - l2:
-                        #print 'here2'
                         key = first + ":B$" + second + ':E'
-                        #key1 = rec2[0] + ":E$" + rec1[0] + ':B'
-                        #norm_score[key] = RF_counts_left[first]*r1 + RF_counts_right[second]*r2
                         norm_score[key] = RF_counts_left[first]*r1 + RF_counts_right[second]*r2
-                        #norm_score[key1] = RF_counts_left[rec1[0]] + RF_counts_left[rec2[0]]
-                        #exp_links[key] = exp_num
                     if pos1 > len1 - l1 and pos2 <= l2:
-                        #print 'here3'
                         key = first + ":E$" + second + ':B'
-                        #print key
-                        #key1 = rec2[0] + ":B$" + rec1[0] + ':E'
-                        #norm_score[key] = RF_counts_right[first]*r1 + RF_counts_left[second]*r2
                         norm_score[key] = RF_counts_right[first]*r1 + RF_counts_left[second]*r2
-                        #norm_score[key1] = RF_counts_left[rec1[0]] + RF_counts_left[rec2[0]]
-                        #exp_links[key] = exp_num
                     if pos1 > len1 - l1 and pos2 > len2 - l2:
-                        #print 'here4'
                         key = first + ":E$" + second + ':E'
-                        #key1 = rec2[0] + ":E$" + rec1[0] + ':E'
-                        #norm_score[key] = RF_counts_right[first]*r1 + RF_counts_right[second]*r2
                         norm_score[key] = RF_counts_right[first]*r1 + RF_counts_right[second]*r2
-                        #norm_score[key1] = RF_counts_left[rec1[0]] + RF_counts_left[rec2[0]]
-                        #exp_links[key] = exp_num
                     if key not in contig_links and key != '':
                         contig_links[key] = 0
                     if key != '':
-                        #print 'adding'
                         contig_links[key] += 1
 
             prev_line = line
 
-
-                #print >> sys.stderr, len(first_in_pair)
-            # except:
-            #     print 'here'
-            #     continue
-
-
-    print >> sys.stderr, 'bedfile loaded'
-
-
+    print("Bedfile loaded.")
 
     print len(contig_links)
     ofile = open(args.directory+'/contig_links_iteration_'+str(iteration),'w')
     for key in contig_links:
         if key != '':
             edge = key.split('$')
-            #rf_sum = RF_counts[edge[0].split(':')[0]] + RF_counts[edge[1].split(':')[0]]
             if norm_score[key] == 0:
                 score = 0
             else:

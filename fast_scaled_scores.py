@@ -59,12 +59,10 @@ for line in f:
 f.close()
 
 ofile = open(args.directory+'/contig_links_scaled_iteration_'+str(args.iteration),'w')
-#print 'Graph Loaded Done'
+
 f1 = open(args.directory+'/contig_links_iteration_'+str(args.iteration),'r')
 for line in f1:
-   #bestAlt=get_max_weight(u, v)
    attrs = line.strip().split()
-   #print 'here'
    u = attrs[0]
    v = attrs[1]
    w = float(attrs[2])
@@ -77,7 +75,6 @@ for line in f1:
 
    bestAlt = max(max_u,max_v)
    if bestAlt == w:
-      #print 'here'
       bestAlt=get_max_weight(u, v)
    if bestAlt==0:
       bestAlt=1

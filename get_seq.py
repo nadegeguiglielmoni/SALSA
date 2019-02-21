@@ -101,21 +101,18 @@ for key in sorted_scaffolds:
         curr_len = contig_length[curr[0]]
         scaff_len += curr_len
         end = curr_len + start - 1
-        line += str(end)
-        line += '\t'
+        line += str(end) + '\t'
         start = end + 1
         line += str(local_comp)
         local_comp += 1
         line += ('\tW\t' + curr[0] + '\t' + '1\t')
-        line += str(curr_len)
-        line += '\t'
+        line += str(curr_len) + '\t'
         #print curr
         if curr[1] == 'B' and nextitem[1] == 'E':
             curr_contig += id2seq[curr[0]]
             line += '+\t'
         if curr[1] == 'E' and nextitem[1] == 'B':
             line += '-\t'
-            #print id2seq[curr[0]]
             curr_contig += rev_comp(id2seq[curr[0]])
 
         agp_output.write(line+'\n')

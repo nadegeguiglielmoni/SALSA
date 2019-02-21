@@ -1,31 +1,10 @@
 import sys
+import get_seq
 
 #reads input assembly, breakpoints given by the method and outputs new contig file with lengths
 #offsets bed file as well
-
-def parse_fasta(fh):
-    fa = {}
-    current_short_name = None
-    # Part 1: compile list of lines per sequence
-    for ln in fh:
-        if ln[0] == '>':
-            # new name line; remember current sequence's short name
-            long_name = ln[1:].rstrip()
-            current_short_name = long_name.split()[0]
-            fa[current_short_name] = []
-        else:
-            # append nucleotides to current sequence
-            fa[current_short_name].append(ln.rstrip())
-    # Part 2: join lists into strings
-    for short_name, nuc_list in fa.iteritems():
-        # join this sequence's lines into one long string
-        fa[short_name] = ''.join(nuc_list)
-    return fa
-
-
-
 #read fasta first
-input_seqs = parse_fasta(open(sys.argv[1],'r'))
+input_seqs = get_seq.parse_fasta(sys.argv[1])
 
 #read breakpoints
 
@@ -34,8 +13,6 @@ with open(sys.argv[2],'r') as f:
     for line in f:
         attrs = line.split()
         contig2breakpoints[attrs[0]] = int(attrs[1])
-
-
 
 #first breake the input assembly and store the mapping of old to new names of contigs
 contig2new = {}
@@ -56,7 +33,6 @@ for seq in input_seqs:
         contig2new[seq] = [first_id,second_id]
         contig2newseq[first_id] = first
         contig2newseq[second_id] = second
-
 
 #now update the bed file in streaming fashion
 oline = ""
@@ -97,7 +73,6 @@ for seq in contig2newseq:
     ofasta.write('>'+seq+'\n')
     for chunk in chunks:
         ofasta.write(chunk+'\n')
-
 
 ofasta.close()
 
