@@ -113,7 +113,7 @@ def main():
 
 	log = open(args.output + '/commands.log', 'w', 1)
 
-	# check for the existence of the contigs length file
+	# Copy the length file as SCAFFOLD_LENGHT_ITERATION_I
 	if not os.path.exists(args.output + '/scaffold_length_iteration_1') :
 		cmd = 'cp ' + args.length + ' ' + args.output \
 			+ '/scaffold_length_iteration_1'
@@ -125,11 +125,11 @@ def main():
 
 	if not os.path.isfile(args.output + '/alignment_iteration_1.bed'):
 		
-		if args.filter == "yes":
+		if args.filter == "yes" :
 			os.system("cut -f 1 " 
 				+ args.length 
 				+ " | grep -v '>'  > " 
-				+ args.output +"/contig_names.txt")
+				+ args.output + "/contig_names.txt")
 			os.system("grep -f " *
 				+ args.output
 				+ "/contig_names.txt -w  "
@@ -275,7 +275,7 @@ def main():
 			p = subprocess.check_output(cmd, shell=True)
 		except subprocess.CalledProcessError as err:
 			if os.path.isfile(args.output + 'scaffolds_iteration_1.p'):
-				os.system('rm ' + args.output 
+				os.system('rm ' + args.output \
 					+ 'scaffolds_iteration_1.p')
 			print("ERROR : Could not run module layout_unitigs.")
 			sys.exit(1)
