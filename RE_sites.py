@@ -1,6 +1,9 @@
 import re 
 import argparse
 import seq_utils as sequ
+import Bio
+from Bio import SeqIO
+from Bio import Restriction
 
 #======================================================================#
 #								ARGUMENTS
@@ -25,34 +28,28 @@ args = parser.parse_args()
 #	enzyme_input : str, one or several enzymes separated by commas
 # output :
 #	enzyme_list : list, list of enzymes
-def parse_enzyme_input(enzyme_input: str) -> list :
+def parse_enzyme_input(enzyme_input: str) :
 	"""
 	Parse the list of enzymes given as input.
 	"""
 	enzyme_list = args.enzyme.strip(" ").split(',')
-	return enzyme_list
+	return Restriction.RestrictionBatch(enzyme_list)
 	
 def main():
-	seq_data = sequ.parse_fasta(args.assembly)
+	seq_data = SeqIO.parse(args.assembly, "fasta")
 	
 	# Parse one or several enzymes given as input
 	enzymes_input = parse_enzyme_input(args.enzyme)
 
+	for record in seq_data :
+		enzymes_input.search(record.seq)
 	final_enzymes = []
-	for each in enzymes_input:
-		if 'N' in each:
-			final_enzymes.append(each.replace('N','G'))
-			final_enzymes.append(each.replace('N','A'))
-			final_enzymes.append(each.replace('N','T'))
-			final_enzymes.append(each.replace('N','C'))
-		else:
-			final_enzymes.append(each)
 
-	for key in seq_data :
+	for seq in seq_data :
 		
 		id_seq, seq = key, f[key]
 		left_count = 0
-		rigt_count = 0
+		right_count = 0
 		for enzyme in final_enzymes :
 			pos  = [m.start(0) for m in re.finditer(enzyme,seq)]
 		 
@@ -61,9 +58,9 @@ def main():
 				if each < length/2:
 					left_count += 1
 				else:
-					rigt_count += 1
+					right_count += 1
 
-		print("{0}\t{1}\t{2}\n".format(id, left_count, rigt_count))
+		print("{0}\t{1}\t{2}\n".format(id_seq, left_count, right_count))
 
 	
 
