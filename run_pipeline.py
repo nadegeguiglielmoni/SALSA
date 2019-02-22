@@ -3,6 +3,8 @@ import argparse
 import sys
 import subprocess
 from subprocess import Popen, PIPE
+import seq_utils as sequ
+import digest
 
 
 def check(path):
@@ -24,7 +26,7 @@ def NG50(lengths, sz=0):
         genome_size = sum(lengths.values())
     contig_lengths = sorted(lengths.values(), reverse=True)
     lensum = 0
-    for i in xrange(len(contig_lengths)):
+    for i in range(len(contig_lengths)):
         lensum += contig_lengths[i]
         if lensum >= genome_size / 2:
             return contig_lengths[i]
@@ -38,9 +40,6 @@ def main():
 
     parser.add_argument(
         "-a", "--assembly", help="Path to initial assembly", required=True
-    )
-    parser.add_argument(
-        "-l", "--length", help="Length of contigs at start", required=True
     )
     parser.add_argument(
         "-b", "--bed", help="Bed file of alignments sorted by read names", required=True
@@ -104,7 +103,7 @@ def main():
     parser.add_argument(
         "-p",
         "--prnt",
-        help='Set this option to "yes" if you want to output the '
+        help="Set this option to 'yes' if you want to output the "
         "scaffolds sequence and gap file for each iteration",
         required=False,
         default="no",
@@ -133,43 +132,46 @@ def main():
 
     genome_size = int(args.exp)
 
+    # ----------------------- Handle files and directories -----------------------#
+
+    if not os.path.exists(args.assembly):
+        print("ERROR : Could not find the assembly file {0}".format(args.assembly))
+        sys.exit(1)
+    if not os.path.exists(args.bed):
+        print("ERROR : Could not find the Hi-C data bed file {0}".format(args.bed))
+        sys.exit(1)
+
     # create output directory if it does not exist
     if not os.path.exists(args.output):
         os.mkdir(args.output)
 
     log = open(args.output + "/commands.log", "w", 1)
 
-    # Copy the length file as SCAFFOLD_LENGHT_ITERATION_I
-    if not os.path.exists(args.output + "/scaffold_length_iteration_1"):
-        cmd = "cp " + args.length + " " + args.output + "/scaffold_length_iteration_1"
-        try:
-            p = subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as err:
-            print("ERROR : Could not copy contigs length file.")
-            sys.exit(1)
+    # ----------------------- Generate length file -------------------------------#
 
-    if not os.path.isfile(args.output + "/alignment_iteration_1.bed"):
+    sequ.make_seq_length_file(
+        assembly=args.assembly,
+        output_file=args.output + "/scaffold_length_iteration_1",
+        namelist_file=args.output + "/contig_names.txt",
+    )
 
-        if args.filter == "yes":
-            os.system(
-                "cut -f 1 "
-                + args.length
-                + " | grep -v '>'  > "
-                + args.output
-                + "/contig_names.txt"
-            )
-            os.system(
-                "grep -f " * +args.output
-                + "/contig_names.txt -w  "
-                + args.bed
-                + " > "
-                + args.output
-                + "/alignment_iteration_1.bed"
-            )
-        else:
-            os.symlink(
-                os.path.abspath(args.bed), args.output + "/alignment_iteration_1.bed"
-            )
+    # ----------------------- Filtering bed file ---------------------------------#
+
+    if args.filter == "yes":
+        # filter Hi-C reads for contigs present in the assembly
+        os.system(
+            "grep -f "
+            + args.output
+            + "/contig_names.txt -w  "
+            + args.bed
+            + " > "
+            + args.output
+            + "/alignment_iteration_1.bed"
+        )
+    else:
+        os.symlink(
+            os.path.abspath(args.bed), args.output + "/alignment_iteration_1.bed"
+        )
 
     os.system(
         "ln -s "
@@ -179,7 +181,8 @@ def main():
         + "/assembly.cleaned.fasta"
     )
 
-    # ------------- FIND MISASSEMBLIES ---------------------------------#
+    # ----------------------- FIND MISASSEMBLIES ---------------------------------#
+
     if args.clean == "yes":
 
         cmd = (
@@ -194,9 +197,12 @@ def main():
         )
         log.write(cmd)
         try:
-            p = subprocess.check_output(cmd, shell=True)
+            subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as err:
-            print("ERROR : Could not run break_contigs_start")
+            print(
+                "ERROR : Could not run break_contigs_start to detect misassemblies."
+                " Will continue without detecting misassemblies."
+            )
 
         cmd = (
             "python "
@@ -232,32 +238,16 @@ def main():
             + "/assembly.cleaned.fasta"
         )
 
-        # ------------- GET RESTRICTION ENZYME CUTTING SITES ---------------#
+    print("Digesting genome.")
+    # ------------- GET RESTRICTION ENZYME CUTTING SITES ---------------#
 
-    if not os.path.isfile(args.output + "/re_counts_iteration_" + str(iter_num)):
+    digest.generate_digested_fragments(
+        assembly=args.output + "/assembly.cleaned.fasta",
+        enzyme=args.enzyme,
+        outname=args.output + "/re_counts_iteration_" + str(iter_num),
+    )
 
-        try:
-            cmd = (
-                "python "
-                + workdir
-                + "/RE_sites.py -a "
-                + args.output
-                + "/assembly.cleaned.fasta -e "
-                + args.enzyme
-                + " > "
-                + args.output
-                + "/re_counts_iteration_"
-                + str(iter_num)
-            )
-
-            log.write("{0}\n".format(cmd))
-            p = subprocess.check_output(cmd, shell=True)
-
-        except subprocess.CalledProcessError as err:
-            print("ERROR : Could not run module RE_sites")
-            sys.exit(1)
-
-            # ------------- MAKE LINKS -----------------------------------------#
+    # ------------- MAKE LINKS -----------------------------------------#
 
     print("Starting iteration {0}".format(iter_num))
 

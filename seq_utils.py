@@ -5,6 +5,9 @@
 #         - generate reverse complement
 # ======================================================================#
 
+import Bio
+from Bio import SeqIO
+
 
 def parse_fasta(fasta_file) -> dict:
     """
@@ -54,13 +57,20 @@ def rev_comp(seq: str) -> str:
     return rev_seq
 
 
-def seq_length(seq_record: dict) -> dict:
+def make_seq_length_file(assembly, output_file, namelist_file="abc"):
     """
     Compute sequences length.
     """
-    seq_len = {}
+    seq_data = SeqIO.parse(assembly, "fasta")
 
-    for seq in seq_record.keys():
-        seq_len[seq] = len(seq_record[seq])
+    outlength = open(output_file, "w")
+    if namelist_file != "abc":
+        namelist = open(namelist_file, "w")
 
-    return seq_length
+    for record in seq_data:
+        outlength.write("{0}\t{1}\n".format(record.id, len(record.seq)))
+        if namelist_file != "abc":
+            namelist.write("{0}\n".format(record.id))
+
+    outlength.close()
+    namelist.close()

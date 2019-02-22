@@ -93,7 +93,7 @@ def write_fragments_file(restrict_dict: dict, outfile):
 # output :
 # 	output file written with all the digested fragments in the sequence
 # 	'seqid	frag_start	frag_end'
-def get_digested_fragments(assembly, enzyme: str, outname):
+def generate_digested_fragments(assembly, enzyme: str, outname):
     """
 	Takes a genome and one or several enzymes to digest the genome,
 	and returns the digested fragments.
