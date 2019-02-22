@@ -6,7 +6,7 @@ from Bio import SeqIO
 from Bio import Restriction
 
 #======================================================================#
-#								ARGUMENTS
+#                                ARGUMENTS
 #======================================================================#
 
 parser = argparse.ArgumentParser()
@@ -20,12 +20,12 @@ parser.add_argument("-e", "--enzyme", help="restriction enzyme")
 args = parser.parse_args()
 
 #======================================================================#
-#								MODULES
+#                                MODULES
 #======================================================================#
 
 # PARSE_ENZYME_INPUT
 # input :
-#	enzyme_input : str, one or several enzymes separated by commas
+#    enzyme_input : str, one or several enzymes separated by commas
 # output :
 #	enzyme_list : list, list of enzymes
 def parse_enzyme_input(enzyme_input: str) :
@@ -62,7 +62,5 @@ def main():
 
 		print("{0}\t{1}\t{2}\n".format(id_seq, left_count, right_count))
 
-	
-
 if __name__ == '__main__':
-	main()
+    main()
