@@ -29,6 +29,7 @@ def main():
                 dup_links[attrs[1] + "$" + attrs[0]] = 1
 
     avoid_links = {}
+
     if int(iteration) > 1:
         with open(
             args.directory + "/links_avoid_iteration_" + str(iteration), "r"
@@ -38,6 +39,7 @@ def main():
                 avoid_links[attrs[0] + "$" + attrs[1]] = 1
                 avoid_links[attrs[1] + "$" + attrs[0]] = 1
 
+    # read contig length file
     with open(
         args.directory + "/scaffold_length_iteration_" + str(iteration), "r"
     ) as cfile:
@@ -73,7 +75,7 @@ def main():
                     continue
                 prev_read = prev_attrs[3]
                 curr_read = attrs[3]
-                # print prev_read.split('/')[0]
+
                 if prev_read.split("/")[0] == curr_read.split("/")[0]:
                     pos1 = (int(prev_attrs[1]) + int(prev_attrs[2])) / 2.0
                     pos2 = (int(attrs[1]) + int(attrs[2])) / 2.0
