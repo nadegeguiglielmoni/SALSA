@@ -1,9 +1,8 @@
 # ======================================================================#
 # Digest genome
-# Last edition : 2019/02/29
+# Last edition : 2019/02/26
 # ======================================================================#
 
-import argparse
 import numpy as np
 import Bio
 from Bio import SeqIO
@@ -39,8 +38,12 @@ def parse_enzyme_input(enzyme_input: str):
 # 	fasta_file : fasta file of genome to digest
 # 	enz_list : list of enzymes to use for digestion
 # output :
-# 	restrict_dict : dictionnary with length and cutting sites for each sequence of your genome after digestion by the restriction enzyme
+# 	restrict_dict : dictionnary with length and cutting sites for each sequence
+#                   of your genome after digestion by the restriction enzyme
 def find_restriction_sites(fasta_file, enzyme_list: list) -> dict:
+    """
+    Find the restriction sites of one or several enzyme in a sequence.
+    """
     # Create Restriction enzyme object
     enzymes = Restriction.RestrictionBatch(enzyme_list)
 
@@ -61,10 +64,14 @@ def find_restriction_sites(fasta_file, enzyme_list: list) -> dict:
 
 # COUNT_CUT_SITES
 # input :
-#   restrict_dict : dictionnary of cutting sites for each sequence fragments of your genome after digestion by the restriction enzyme
+#   restrict_dict : dictionnary of cutting sites for each sequence fragments of
+#                   your genome after digestion by the restriction enzyme
 # output :
 #   count_dict : dictionnary of counts of cutting sites for each half of a sequence
 def count_cut_sites(restrict_dict: dict) -> dict:
+    """
+    Count the number of restriction sites on each half of a sequence.
+    """
     count_cut_sites = {}
 
     for contig in restrict_dict.keys():
@@ -82,7 +89,7 @@ def count_cut_sites(restrict_dict: dict) -> dict:
     return count_cut_sites
 
 
-# WRITE_FRAGMENTS_FILE
+# WRITE_COUNT_CUTS_FILE
 # input :
 #   count_dict : dictionnary of counts of cutting sites for each half of a sequence
 # 	outfile : path to output file
@@ -92,11 +99,15 @@ def write_count_cuts_file(count_dict: dict, outfile):
     """
 	Write number of restriction enzyme sites on each half of each sequence.
 	"""
+    output = open(outfile, "w")
+
     for seq in count_dict:
-        short_name = seq.split(" ")
-        outfile.write(
+        short_name = seq.split(" ")[0]
+        output.write(
             "{0}\t{1}\t{2}\n".format(short_name, count_dict[seq][0], count_dict[seq][1])
         )
+
+    output.close()
 
 
 # ======================================================================#
@@ -109,8 +120,7 @@ def write_count_cuts_file(count_dict: dict, outfile):
 # 	enzyme : string of comma separated enzymes
 # 	outname : path to output file
 # output :
-# 	output file written with all the digested fragments in the sequence
-# 	'seqid	frag_start	frag_end'
+# 	output file written with the number of cutting sites on each half of each sequence.
 def generate_digested_fragments(assembly, enzyme: str, outname):
     """
 	Takes a genome and one or several enzymes to digest the genome,

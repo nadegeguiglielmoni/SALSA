@@ -5,6 +5,7 @@ import subprocess
 from subprocess import Popen, PIPE
 import seq_utils as sequ
 import digest
+import make_links
 
 
 def check(path):
@@ -251,34 +252,18 @@ def main():
 
     print("Starting iteration {0}".format(iter_num))
 
-    if not os.path.isfile(args.output + "/contig_links_iteration_" + str(iter_num)):
-        try:
-            cmd = (
-                "python "
-                + workdir
-                + "/make_links.py -b "
-                + args.output
-                + "/alignment_iteration_1.bed"
-                + " -d "
-                + args.output
-                + " -i "
-                + str(iter_num)
-                + " -x "
-                + args.dup
-            )
-            log.write(cmd + "\n")
-            p = subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as err:
-            print("ERROR : Could not run module make_links.")
-            if os.path.isfile(args.output + "/contig_links_iteration_" + str(iter_num)):
-                os.system(
-                    "rm " + args.output + "/contig_links_iteration_" + str(iter_num)
-                )
-            sys.exit(1)
+    make_links.make_contig_links(
+        mapping_data=args.output + "/alignment_iteration_" + str(iter_num) + ".bed",
+        restrict_data=args.output + "/re_counts_iteration_" + str(iter_num),
+        contig_len_data=args.output + "/scaffold_length_iteration_" + str(iter_num),
+        iteration=iter_num,
+        contig_links_file=args.output + "/contig_links_iteration_" + str(iter_num),
+        dup_data=args.dup,
+    )
 
-            # ------------- FAST SCALED SCORES ---------------------------------#
+    # ------------- FAST SCALED SCORES ---------------------------------#
 
-            # now use Serge's code to calculate
+    # now use Serge's code to calculate
     if not os.path.isfile(
         args.output + "/contig_links_scaled_iteration_" + str(iter_num)
     ):
@@ -508,33 +493,14 @@ def main():
 
         print("... Starting iteration {0}".format(iter_num))
 
-        if not os.path.isfile(args.output + "/contig_links_iteration_" + str(iter_num)):
-            cmd = (
-                "python "
-                + workdir
-                + "/make_links.py -b "
-                + args.output
-                + "/alignment_iteration_"
-                + str(iter_num)
-                + ".bed"
-                + " -d "
-                + args.output
-                + " -i "
-                + str(iter_num)
-            )
-            try:
-
-                p = subprocess.check_output(cmd, shell=True)
-                log.write(cmd + "\n")
-            except subprocess.CalledProcessError as err:
-                print("ERROR : Could not run module make_links.")
-                if os.path.isfile(
-                    args.output + "/contig_links_iteration_" + str(iter_num)
-                ):
-                    os.system(
-                        "rm " + args.output + "/contig_links_iteration_" + str(iter_num)
-                    )
-                sys.exit(1)
+        make_links.make_contig_links(
+            mapping_data=args.output + "/alignment_iteration_" + str(iter_num) + ".bed",
+            restrict_data=args.output + "/re_counts_iteration_" + str(iter_num),
+            contig_len_data=args.output + "/scaffold_length_iteration_" + str(iter_num),
+            iteration=iter_num,
+            contig_links_file=args.output + "/contig_links_iteration_" + str(iter_num),
+            dup_data=args.dup,
+        )
 
         if not os.path.isfile(
             args.output + "/contig_links_scaled_iteration_" + str(iter_num)
