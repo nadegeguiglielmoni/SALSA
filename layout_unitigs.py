@@ -62,12 +62,10 @@ with open(args.directory + "/scaffold_length_iteration_1", "r") as f:
 
 OVl_G = nx.Graph()
 
-"""
-Given two nodes, it finds the ratio of shortest with second shortest path
-"""
-
-
 def get_best_path(start, end):
+    """
+    Given two nodes, it finds the ratio of shortest with second shortest path
+    """
     ratio = 0
     minpath = -1
     ori = ""
@@ -83,12 +81,10 @@ def get_best_path(start, end):
     return [minpath, ori, ratio]
 
 
-"""
-Helper function for get_best_path(start,end)
-"""
-
-
 def get_path_two(start, end):
+    """
+    Helper function for get_best_path(start,end)
+    """
     v1 = start.split("-")
     v2 = end.split("-")
 
@@ -123,12 +119,10 @@ def get_path_two(start, end):
     return ret
 
 
-"""
-Loads GFA file for either unitigs or contigs, given the file path
-"""
-
-
 def load_GFA(path):
+    """
+    Loads GFA file for either unitigs or contigs, given the file path
+    """
     # f = open(path,'r')
     with open(path, "r") as f:
         for line in f:
@@ -143,7 +137,7 @@ def load_GFA(path):
                 OVl_G.add_node(
                     line[1] + "$FOW", name=line[1], length=line[3].split(":")[2]
                 )
-            if line[0] == "L":
+            if line[0] == "L" or line[0] == "E":
                 # BUG BUG BUG in GFA inverting edges on input
                 # ctg1=line[3]+"_pilon"
                 # ctg2=line[1]+"_pilon"
@@ -167,13 +161,11 @@ def load_GFA(path):
                     OVl_G.add_edge(ctg2 + "$FOW", ctg1 + "$FOW", weight=1)
 
 
-"""
-Find reverse complement of current orientation of contig
-"""
-
-
 def reverse_complement(contig):
-    # print(contig)
+    """
+    Find reverse complement of current orientation of contig
+    """
+
     c1, o1 = contig.split(":")
     if o1 == "B":
         return c1 + ":E"
@@ -181,13 +173,11 @@ def reverse_complement(contig):
         return c1 + ":B"
 
 
-"""
-Creates a graph based on unitig tiling bed file.
-Currently, all the orientations in the bed file are forward
-"""
-
-
 def load_unitig_mapping():
+    """
+    Creates a graph based on unitig tiling bed file.
+    Currently, all the orientations in the bed file are forward
+    """
     unitig_graph = nx.DiGraph()
     prev_line = ""
     with open(args.unitigs, "r") as f:
@@ -228,13 +218,11 @@ def load_unitig_mapping():
     return unitig_graph
 
 
-"""
-Loads the 10x graph based on the bed links. Note that in this graph, only best weight edge between
-nodes is stored. Cutoff is for the score above which we want to keep the links
-"""
-
-
 def load_tenx_graph(cutoff):
+    """
+    Loads the 10x graph based on the bed links. Note that in this graph, only best weight edge between
+    nodes is stored. Cutoff is for the score above which we want to keep the links
+    """
     G_tenx = nx.Graph()
     with open(args.tenx, "r") as f:
         for line in f:
@@ -301,12 +289,10 @@ Counts to keep log of each types of edge loaded in the graph
 """
 
 
-"""
-This function loads 10x links
-"""
-
-
 def load_tenx_links():
+    """
+    This function loads 10x links
+    """
     if iteration == 1:
         if args.tenx != "abc":
             with open(args.tenx, "r") as f:
@@ -334,39 +320,6 @@ def load_tenx_links():
                         tenx_graph,
                         "tenx",
                     )
-
-
-"""
-This function loads unitig links
-
-def load_unitig_links():
-    if iteration == 1:
-       if args.unitigs != 'abc':
-          #print('here')
-          for u,v in unitig_graph.edges():
-             if u not in G.nodes() and v not in G.nodes():
-                #print(>> sys.stderr, 'here abcd')
-                G.add_edge(u,v,score=2,linktype='unitig')
-                #print("adding")
-                c1 = u.split(':')[0]
-                c2 = v.split(':')[0]
-                #tiling_edges += 1
-                contigs.add(c1)
-                contigs.add(c2)
-
-    else:
-       print('here')
-       if args.unitigs != 'abc':
-          for u,v in unitig_graph.edges():
-             contig_1 = u.split(':')[0]
-             contig_2 = v.split(':')[0]
-             if contig_1 in contig2scaffold and contig_2 in contig2scaffold:
-                scaffold_1 = contig2scaffold[contig_1]
-                scaffold_2 = contig2scaffold[contig_2]
-                print('testing')
-                test_edge(previous_scaffolds[scaffold_1],previous_scaffolds[scaffold_2],tenx_graph,'unitig')
-
-"""
 
 
 def load_unitigs_first():
@@ -483,138 +436,6 @@ def generate_scaffold_graph():
                                 break
                 else:
                     break
-                # if args.unitigs !='abc':
-
-                #    '''
-                #    Before anything, check if any of the node is present in the graph. If not then no point of doing this
-                #    '''
-                # if iteration == 1:
-                #    #break
-                #    to_continue = True
-                #    for link in ["B:E", "B:B", "E:B", "E:E"]:
-                #        v1 = c1 + ':'+link[0]
-                #        v2 = c2 + ':' + link[2]
-                #        v3 = c1 + ':' + link[2]
-                #        v4 = c2 + ':' + link[0]
-                #        nodes = G.nodes()
-                #        if v1 in nodes or v2 in nodes or v3 in nodes or v4 in nodes:
-                #           to_continue = False
-
-                #    if not to_continue:
-                #        #print('continue')
-                #        continue
-
-                #    '''
-                #    First check if the edge is present in the unitig graph in both the orientations
-                #    If the unitig graph can not provide this information, then check the GFA graph
-                #    '''
-                #    added = False
-                #    if args.unitigs != 'abc':
-
-                #        for link in ["B:E", "B:B", "E:B", "E:E"]:
-                #           edgeType = link.split(':')
-                #           if unitig_graph.has_edge(c1+':'+edgeType[0], c2+':'+edgeType[1]):
-                #              v1 = c1+':'+edgeType[0]
-                #              v2 = c2+':'+edgeType[1]
-                #              if v1 not in G.nodes() and v2 not in G.nodes():
-                #                 G.add_edge(v1,v2,score=2)
-                #                 tiling_edges += 1
-                #                 contigs.add(c1)
-                #                 contigs.add(c2)
-                #                 added = True
-
-                #           if unitig_graph.has_edge(c1+':'+edgeType[1], c2+':'+edgeType[0]):
-                #              v1 = c1+':'+edgeType[1]
-                #              v2 = c2+':'+edgeType[0]
-                #              if v1 not in G.nodes() and v2 not in G.nodes():
-                #                 G.add_edge(v1,v2,score=2)
-                #                 tiling_edges += 1
-                #                 contigs.add(c1)
-                #                 contigs.add(c2)
-                #                 added = True
-
-                #    if not added:
-                #        if args.graph != 'abc':
-                #           p = 10000
-                #           minpath = -1
-                #           ori = ''
-                #           ratio = -1
-                #           for link in ["B:E", "B:B", "E:B", "E:E"]:
-                #              edgeType = link.split(':')
-                #              if edgeType[0] == 'B':
-                #                 vertex1 = c1 + '$REV'
-                #              else:
-                #                 vertex1 = c1 + '$FOW'
-
-                #              if edgeType[1] == 'B':
-                #                 vertex2 = c2 + '$FOW'
-                #              else:
-                #                 vertex2 = c2 + '$REV'
-
-                #              if vertex1 in OVl_G.nodes() and vertex2 in OVl_G.nodes():
-                #                 #print('present')
-                #                 if vertex1 in shortest_paths:
-                #                    if vertex2 in shortest_paths[vertex1]:
-                #                        p = shortest_paths[vertex1][vertex2]
-                #                        #print(p)
-                #                 if minpath == -1 or p < minpath:
-                #                    if minpath != -1:
-                #                        ratio = p*1.0/minpath
-                #                    minpath = p
-                #                    ori = link
-
-                #           if minpath != -1 and ratio > 0:
-                #              G.add_edge(v1,v2,score=1.5)
-                #              contigs.add(c1)
-                #              contigs.add(c2)
-                #              gfa_edges += 1
-
-            # else:
-            #    '''
-            #    Here too, first check 10x links and then unitigs
-            #    '''
-
-            #    if args.unitigs != 'abc':
-            #        '''
-            #        This is tricky. Scaffold is the series of contigs. Check just for the terminal contigs. Look up for their
-            #        path in the unitig tiling and decide if to put an edge or not
-            #        '''
-            #        scaffold_first = previous_scaffolds[c1]
-            #        scaffold_second = previous_scaffolds[c2]
-            #        #if len(scaffold_first) > 2 and len(scaffold_second) > 2:
-            #        first_first = scaffold_first[0]
-            #        last_first = scaffold_first[-1]
-            #        first_second = scaffold_second[0]
-            #        last_second = scaffold_second[-1]
-
-            #        if unitig_graph.has_edge(last_first,first_second):
-            #           v1 = c1+':E'
-            #           v2 = c2 + ':B'
-            #           if v1 not in G.nodes() and v2 not in G.nodes():
-            #              G.add_edge(v1,v2,score=2)
-
-            #        if unitig_graph.has_edge(reverse_complement(first_first),first_second):
-            #           v1 = c1 + ':B'
-            #           v2 = c2 + ':B'
-            #           if v1 not in G.nodes() and v2 not in G.nodes():
-            #              G.add_edge(v1,v2,score=2)
-
-            #        if unitig_graph.has_edge(last_first,reverse_complement(last_second)):
-            #           v1 = c1 + ':E'
-            #           v2 = c2 + ':E'
-            #           if v1 not in G.nodes() and v2 not in G.nodes():
-            #              G.add_edge(v1,v2,score=2)
-
-            #        if unitig_graph.has_edge(reverse_complement(first_first),reverse_complement(last_second)):
-            #           v1 = c1 + ':E'
-            #           v2 = c2 + ':B'
-            #           if v1 not in G.nodes() and v2 not in G.nodes():
-            #              G.add_edge(v1,v2,score=2)
-            #              contigs.add(c1)
-            #              contigs.add(c2)
-            #              tiling_edges += 1
-
-            #    continue
 
             else:
                 if v1 not in G.nodes() and v2 not in G.nodes():
@@ -669,12 +490,10 @@ def generate_scaffold_graph():
     print("Hi-C implied edges = " + str(hic_edges), file=sys.stderr)
 
 
-"""
-This function generates seeds scaffolds from the hybrid Graph G
-"""
-
-
 def get_seed_scaffold():
+    """
+    This function generates seeds scaffolds from the hybrid Graph G
+    """
 
     g_idx = 1
     seed_scaffolds = {}  # this stores initial long scaffolds
@@ -700,12 +519,10 @@ def get_seed_scaffold():
     return seed_scaffolds, to_merge
 
 
-"""
-Given a small contig, it finds best scaffold where small contig can go in
-"""
-
-
 def assign_small_to_seed(to_merge, seed_scaffolds):
+    """
+    Given a small contig, it finds best scaffold where small contig can go in
+    """
     assignment = {}
 
     for contig in to_merge:
@@ -734,13 +551,11 @@ def assign_small_to_seed(to_merge, seed_scaffolds):
     return assignment
 
 
-"""
-Given assignment of small to seed, this methods tries to put small scaffolds on seed in
-all possible orientation and orderings
-"""
-
-
 def insert(assignment, seed_scaffolds):
+    """
+    Given assignment of small to seed, this methods tries to put small scaffolds on seed in
+    all possible orientation and orderings
+    """
     to_add_later = set()
     for contig in assignment:
         # print(contig)
@@ -1000,9 +815,7 @@ def update_bed(expanded_scaffold):
     re_out.close()
 
 
-# print(assignment)
 # now try to place these contigs on these paths in all possible orientations and at all possible positions
-# print(assignment)
 
 
 def merge(contigs):

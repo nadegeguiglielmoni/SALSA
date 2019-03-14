@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE
 import seq_utils as sequ
 import digest
 import make_links
+import fast_scaled_scores as fss
 
 
 def check(path):
@@ -264,36 +265,14 @@ def main():
     # ------------- FAST SCALED SCORES ---------------------------------#
 
     # now use Serge's code to calculate
-    if not os.path.isfile(
-        args.output + "/contig_links_scaled_iteration_" + str(iter_num)
-    ):
-        try:
-            cmd = (
-                "python "
-                + workdir
-                + "/fast_scaled_scores.py -d "
-                + args.output
-                + " -i "
-                + str(iter_num)
-            )
-            log.write(cmd + "\n")
 
-            p = subprocess.check_output(cmd, shell=True)
-        except subprocess.CalledProcessError as err:
-            if os.path.isfile(
-                args.output + "/contig_links_scaled_iteration_" + str(iter_num)
-            ):
-                os.system(
-                    "rm "
-                    + args.output
-                    + "/contig_links_scaled_iteration_"
-                    + str(iter_num)
-                )
-            print("ERROR : Could not run module fast_scaled_scores.")
-            sys.exit(1)
+    fss.fast_scaled_scores(
+        infile=args.output + "/contig_links_iteration_" + str(iter_num),
+        outfile=args.output + "/contig_links_scaled_iteration_" + str(iter_num),
+    )
 
-            # ------------- SORT LINKS -----------------------------------------#
-            # Sort the links by column 5
+    # ------------- SORT LINKS -----------------------------------------#
+    # Sort the links by column 5
     if not os.path.isfile(
         args.output + "/contig_links_scaled_sorted_iteration_" + str(iter_num)
     ):
@@ -502,32 +481,10 @@ def main():
             dup_data=args.dup,
         )
 
-        if not os.path.isfile(
-            args.output + "/contig_links_scaled_iteration_" + str(iter_num)
-        ):
-            cmd = (
-                "python "
-                + workdir
-                + "/fast_scaled_scores.py -d "
-                + args.output
-                + " -i "
-                + str(iter_num)
-            )
-            try:
-                log.write(cmd + "\n")
-                p = subprocess.check_output(cmd, shell=True)
-            except subprocess.CalledProcessError as err:
-                if os.path.isfile(
-                    args.output + "/contig_links_scaled_iteration_" + str(iter_num)
-                ):
-                    os.system(
-                        "rm "
-                        + args.output
-                        + "/contig_links_scaled_iteration_"
-                        + str(iter_num)
-                    )
-                print("ERROR : Could not run module fast_scaled_scores.")
-                sys.exit(1)
+        fss.fast_scaled_scores(
+            infile=args.output + "/contig_links_iteration_" + str(iter_num),
+            outfile=args.output + "/contig_links_scaled_iteration_" + str(iter_num),
+        )
 
         if not os.path.isfile(
             args.output + "/contig_links_scaled_sorted_iteration_" + str(iter_num)
