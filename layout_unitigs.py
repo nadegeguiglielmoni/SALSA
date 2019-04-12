@@ -23,13 +23,7 @@ parser.add_argument(
 parser.add_argument(
     "-i", "--iteration", help="Iteration number", required=False, default=1
 )
-parser.add_argument(
-    "-u",
-    "--unitigs",
-    help="Bed file for unitig to contig tiline",
-    required=False,
-    default="abc",
-)
+
 parser.add_argument(
     "-t",
     "--tenx",
@@ -42,6 +36,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+# ======================================================================#
+#                                MAIN
+# ======================================================================#
 
 G = nx.Graph()
 contigs = set()
@@ -55,10 +52,30 @@ tenx_links = 0
 
 
 contig_lengths_original = {}
-with open(args.directory + "/scaffold_length_iteration_1", "r") as f:
+
+contig_length = get_contig_len(args.directory + "/scaffold_length_iteration_1")
+
+# ======================================================================#
+#                                MODULES
+# ======================================================================#
+
+# GET_CONTIG_LEN
+# input :
+#   filename : path to file with contig length at current iteration
+# output :
+#   seq_len : dictionnary with length
+def get_contig_len(filename) :
+    """Create a dictionnary with contig name and contig length."""
+    f = open(filename, "r")
+    seq_len = {}
+
     for line in f:
-        attrs = line.split()
-        contig_length[attrs[0]] = int(attrs[1])
+        attrs = line.strip().split()
+        seq_len[attrs[0]] = int(attrs[1])
+
+    f.close()
+
+    return seq_len
 
 OVl_G = nx.Graph()
 
@@ -70,18 +87,17 @@ def get_best_path(start, end):
     minpath = -1
     ori = ""
 
-    for link in ["B:E", "B:B", "E:B", "E:E"]:
-        edgeType = link.split(":")
-        p = get_path_two(start + "-" + edgeType[0], end + "-" + edgeType[1])
+    for edgeType in [("B","E"), ("B","B"), ("E","B"), ("E","E")]:
+        p = get_best_path_aux(start + "-" + edgeType[0], end + "-" + edgeType[1])
         if minpath == -1 or len(p) < minpath:
             if minpath != -1:
                 ratio = (float)(len(p)) / minpath
             minpath = len(p)
-            ori = link
+            ori = edgeType[0] + "$" + edgeType[1]
     return [minpath, ori, ratio]
 
 
-def get_path_two(start, end):
+def get_best_path_aux(start, end):
     """
     Helper function for get_best_path(start,end)
     """
@@ -139,11 +155,6 @@ def load_GFA(path):
                 )
             if line[0] == "L" or line[0] == "E":
                 # BUG BUG BUG in GFA inverting edges on input
-                # ctg1=line[3]+"_pilon"
-                # ctg2=line[1]+"_pilon"
-                # tmp=line[2]
-                # line[2]=line[4]
-                # line[4]=tmp
                 # assume orientations are correct
                 ctg1 = line[1]
                 ctg2 = line[3]
@@ -171,51 +182,6 @@ def reverse_complement(contig):
         return c1 + ":E"
     else:
         return c1 + ":B"
-
-
-def load_unitig_mapping():
-    """
-    Creates a graph based on unitig tiling bed file.
-    Currently, all the orientations in the bed file are forward
-    """
-    unitig_graph = nx.DiGraph()
-    prev_line = ""
-    with open(args.unitigs, "r") as f:
-        for line in f:
-            if prev_line == "":
-                prev_line = line
-                continue
-            attrs = line.split()
-            prev_attrs = prev_line.split()
-            contig = attrs[0]
-            prev_contig = prev_attrs[0]
-            if prev_contig == contig:
-                # this is to take into account the naming
-                prev_unitig = "tig" + str(prev_attrs[3][3:])
-                curr_unitig = "tig" + str(attrs[3][3:])
-                prev_orient = prev_attrs[-1]
-                curr_orient = attrs[-1]
-                if prev_orient == "+" and curr_orient == "+":
-                    unitig_graph.add_edge(prev_unitig + ":E", curr_unitig + ":B")
-                    unitig_graph.add_edge(curr_unitig + ":E", prev_unitig + ":B")
-                if prev_orient == "+" and curr_orient == "-":
-                    unitig_graph.add_edge(prev_unitig + ":E", curr_unitig + ":E")
-                    unitig_graph.add_edge(curr_unitig + ":B", prev_unitig + ":B")
-                if prev_orient == "-" and curr_unitig == "-":
-                    unitig_graph.add_edge(prev_unitig + ":B", curr_unitig + ":E")
-                    unitig_graph.add_edge(curr_unitig + ":B", prev_unitig + ":E")
-                if prev_orient == "-" and curr_orient == "+":
-                    unitig_graph.add_edge(prev_unitig + ":B", curr_unitig + ":B")
-                    unitig_graph.add_edge(curr_unitig + ":E", prev_unitig + ":E")
-
-            prev_line = line
-    print(
-        "Unitig tiling graph loaded, nodes = "
-        + str(len(unitig_graph.nodes()))
-        + " edges = "
-        + str(len(unitig_graph.edges()))
-    )
-    return unitig_graph
 
 
 def load_tenx_graph(cutoff):
